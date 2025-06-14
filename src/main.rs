@@ -21,7 +21,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for line in stdin.lock().lines() {
         let line = line?;
         if !line.is_empty() {
-            let links = extractor.extract_links(&line)?;
+            let mut line_with_newline = line;
+            if !line_with_newline.ends_with('\n') {
+                line_with_newline.push('\n');
+            }
+            let links = extractor.extract_links(&line_with_newline)?;
             total_links += links.len();
 
             for (i, link) in links.iter().enumerate() {
