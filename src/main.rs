@@ -16,6 +16,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut markdown = String::new();
     io::stdin().read_to_string(&mut markdown)?;
+    if !markdown.ends_with('\n') {
+        markdown.push('\n');
+    }
 
     let mut extractor = LinkExtractor::new()?;
     let links = extractor.extract_links(&markdown)?;
