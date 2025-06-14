@@ -24,10 +24,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         buffer.push_str(&line);
         buffer.push('\n');
 
-        if buffer.contains("\n\n") {
-            let parts: Vec<&str> = buffer.splitn(2, "\n\n").collect();
-            let block = parts[0];
-            buffer = parts[1].to_string();
+        if let Some((block, remaining)) = buffer.split_once("\n\n") {
+            let block = block.to_string();
+            buffer = remaining.to_string();
 
             println!("Processing block at line: {}", line_number);
             line_number += block.lines().count();
