@@ -17,14 +17,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdin = io::stdin();
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
-
+    let mut line_number = 1;
     for line in stdin.lock().lines() {
+        println!("line:{}", line_number);
+        line_number += 1;
         let line = line?;
         if !line.is_empty() {
             let mut line_with_newline = line;
-            if !line_with_newline.ends_with('\n') {
-                line_with_newline.push('\n');
-            }
+            line_with_newline.push('\n');
             let links = extractor.extract_links(&line_with_newline)?;
             total_links += links.len();
 
