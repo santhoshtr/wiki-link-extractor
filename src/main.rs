@@ -29,13 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             total_links += links.len();
 
             for link in links.iter() {
-                println!(
-                    "{}\t{}\t{}\t{}",
-                    link.title,
-                    link.label.as_deref().unwrap_or(""),
-                    link.start_byte,
-                    link.end_byte
-                );
+                println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
             }
         }
     }

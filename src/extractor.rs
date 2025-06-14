@@ -39,7 +39,6 @@ impl LinkExtractor {
         &mut self,
         wikitext: &str,
     ) -> Result<Vec<WikiLink>, Box<dyn std::error::Error>> {
-        println!("{}", &wikitext);
         let tree = self.parser.parse(wikitext, None).unwrap();
         let root_node = tree.root_node();
         let mut cursor = QueryCursor::new();
