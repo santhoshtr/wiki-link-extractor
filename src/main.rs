@@ -28,12 +28,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let links = extractor.extract_links(&line_with_newline)?;
             total_links += links.len();
 
-            for (i, link) in links.iter().enumerate() {
-                println!("{}. Title: '{}'", total_links + i, link.title);
-                if let Some(label) = &link.label {
-                    println!("   Label: '{}'", label);
-                }
-                println!("   Position: bytes {}-{}", link.start_byte, link.end_byte);
+            for link in links.iter() {
+                println!(
+                    "{}\t{}\t{}\t{}",
+                    link.title,
+                    link.label.as_deref().unwrap_or(""),
+                    link.start_byte,
+                    link.end_byte
+                );
             }
         }
     }
