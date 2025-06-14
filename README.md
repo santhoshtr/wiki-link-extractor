@@ -73,3 +73,5 @@ cargo test
 ## Notes
 - Ensure that the input is in valid wikitext format for accurate link extraction.
 - The program appends a newline to each line of input before processing to ensure proper parsing.
+- **Powered by [tree_sitter_wikitext](https://github.com/tree-sitter/tree-sitter-wikitext):**
+  This program uses the `tree_sitter_wikitext` library to parse wikitext efficiently. `tree_sitter_wikitext` is a Tree-sitter grammar for parsing wikitext, enabling structured and efficient extraction of elements like links, headings, and more.
