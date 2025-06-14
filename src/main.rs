@@ -14,14 +14,14 @@ pub struct MarkdownLink {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::io::{self, Read};
 
-    let mut markdown = String::new();
-    io::stdin().read_to_string(&mut markdown)?;
-    if !markdown.ends_with('\n') {
-        markdown.push('\n');
+    let mut markup = String::new();
+    io::stdin().read_to_string(&mut markup)?;
+    if !markup.ends_with('\n') {
+        markup.push('\n');
     }
 
     let mut extractor = LinkExtractor::new()?;
-    let links = extractor.extract_links(&markdown)?;
+    let links = extractor.extract_links(&markup)?;
 
     println!("Found {} links:", links.len());
     for (i, link) in links.iter().enumerate() {
