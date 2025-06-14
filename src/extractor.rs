@@ -46,7 +46,6 @@ impl LinkExtractor {
         let mut captures = cursor.captures(&self.query, root_node, wikitext.as_bytes());
 
         let mut links = Vec::new();
-        let mut current_inline_link: Option<WikiLink> = None;
         while let Some((mat, capture_index)) = captures.next() {
             let capture = mat.captures[*capture_index];
             let capture_name = &self.query.capture_names()[capture.index as usize];
@@ -55,7 +54,7 @@ impl LinkExtractor {
                 // Inline links
                 "link.title" => {
                     let title = node_text.trim_matches('"').trim_matches('\'');
-                    current_inline_link = Some(WikiLink {
+                    links.push(WikiLink {
                         label: Some(String::new()),
                         title: title.to_string(),
                         start_byte: capture.node.start_byte(),
@@ -63,15 +62,11 @@ impl LinkExtractor {
                     });
                 }
                 "link.label" => {
-                    if let Some(ref mut link) = current_inline_link {
-                        link.label = Some(node_text);
+                    if let Some(last_link) = links.last_mut() {
+                        last_link.label = Some(node_text);
                     }
                 }
                 _ => {}
-            }
-            // Check if we completed a link structure
-            if let Some(inline_link) = current_inline_link.take() {
-                links.push(inline_link);
             }
         }
 
