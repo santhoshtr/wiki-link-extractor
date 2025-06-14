@@ -30,8 +30,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Processing block at line: {}", line_number);
             line_number += block.lines().count();
             let chunk = block.as_str();
-            // Append \n to chunk. AI!
-            let links = extractor.extract_links(chunk)?;
+            let chunk = format!("{}\n", chunk);
+            let links = extractor.extract_links(&chunk)?;
             total_links += links.len();
 
             for link in links.iter() {
