@@ -12,10 +12,13 @@ pub struct MarkdownLink {
 
 // Example usage
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let markdown = "= Example Document =\n\nThis is [[Another|Title]]\n";
+    use std::io::{self, Read};
+
+    let mut markdown = String::new();
+    io::stdin().read_to_string(&mut markdown)?;
 
     let mut extractor = LinkExtractor::new()?;
-    let links = extractor.extract_links(markdown)?;
+    let links = extractor.extract_links(&markdown)?;
 
     println!("Found {} links:", links.len());
     for (i, link) in links.iter().enumerate() {
