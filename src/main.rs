@@ -22,7 +22,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for line in stdin.lock().lines() {
         let line = line?;
         buffer.push_str(&line);
-        buffer.push('\n');
 
         if let Some((block, remaining)) = buffer.split_once("\n\n") {
             let block = block.to_string();
@@ -30,8 +29,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             println!("Processing block at line: {}", line_number);
             line_number += block.lines().count();
-
-            let links = extractor.extract_links(block)?;
+            let chunk = block.as_str();
+            // Append \n to chunk. AI!
+            let links = extractor.extract_links(chunk)?;
             total_links += links.len();
 
             for link in links.iter() {
