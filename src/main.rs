@@ -22,10 +22,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
     let file_name = &args[1];
-    let input = std::fs::read_to_string(file_name)?;
+    use quick_xml::Reader;
+    use quick_xml::events::Event;
 
-    // Pass the entire input to extract_links
-    let links = extractor.extract_links(&input)?;
+    let mut reader = Reader::from_file(file_name)?;
+    reader.trim_text(true);
+
+    let mut buf = Vec::new();
+    let mut text_content = String::new();
+
+    // Extract the text under the <text> node
+    loop {
+        match reader.read_event(&mut buf) {
+            Ok(Event::Start(ref e)) if e.name() == b"text" => {
+                text_content = reader.read_text(b"text", &mut Vec::new())?;
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => return Err(Box::new(e)),
+            _ => (),
+        }
+        buf.clear();
+    }
+
+    // Pass the extracted text to extract_links
+    let links = extractor.extract_links(&text_content)?;
     total_links += links.len();
     for link in links.iter() {
         println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
