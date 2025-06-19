@@ -27,14 +27,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Pass the entire input to extract_links
     let links = extractor.extract_links(&input)?;
     total_links += links.len();
-
     for link in links.iter() {
         println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
     }
-
-    println!("Total links found: {}", total_links);
-
-    println!("Total links found: {}", total_links);
 
     Ok(())
 }
