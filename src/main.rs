@@ -12,12 +12,11 @@ pub struct MarkdownLink {
 
 // Example usage
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    use std::io::{self, BufRead};
-    let stdin = io::stdin();
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
 
-    // Read the entire input into a single string
+    // Read the file and pass content to extract_links. No need to read from stdin. first argument
+    // is file name. AI!
     let mut input = String::new();
     stdin.lock().read_to_string(&mut input)?;
 
