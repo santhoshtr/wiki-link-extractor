@@ -71,8 +71,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "text" => {
                             let file_path = format!("data/{}.wikitext", id_content);
                             fs::write(&file_path, &text_content)?;
-                            // Read the content of that file to argument of extract_links. AI!
-                            let links = extractor.extract_links(&text_content)?;
+                            let file_content = fs::read_to_string(&file_path)?;
+                            let links = extractor.extract_links(&file_content)?;
                             total_links += links.len();
                             for link in links.iter() {
                                 println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
