@@ -1,3 +1,5 @@
+use std::fs;
+
 use extractor::LinkExtractor;
 mod extractor;
 
@@ -67,14 +69,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            use std::fs;
+                            let file_path = format!("data/{}.wikitext", id_content);
+                            fs::write(&file_path, &text_content)?;
+                            // Read the content of that file to argument of extract_links. AI!
                             let links = extractor.extract_links(&text_content)?;
                             total_links += links.len();
                             for link in links.iter() {
                                 println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
                             }
-                            let file_path = format!("data/{}.txt", id_content);
-                            fs::write(&file_path, &text_content)?;
                             current_tag = None;
                             text_content.clear();
                             id_content.clear();
