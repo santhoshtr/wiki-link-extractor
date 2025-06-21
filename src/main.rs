@@ -67,12 +67,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            // Write the content to data folder with name as id_content. AI!
+                            use std::fs;
                             let links = extractor.extract_links(&text_content)?;
                             total_links += links.len();
                             for link in links.iter() {
                                 println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
                             }
+                            let file_path = format!("data/{}.txt", id_content);
+                            fs::write(&file_path, &text_content)?;
                             current_tag = None;
                             text_content.clear();
                             id_content.clear();
