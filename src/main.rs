@@ -26,29 +26,66 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     use quick_xml::events::Event;
 
     let mut reader = Reader::from_file(file_name)?;
-    reader.trim_text(true);
-
+    reader.config_mut().trim_text(true);
+    reader.config_mut().allow_unmatched_ends = true;
+    reader.config_mut().check_end_names = false;
     let mut buf = Vec::new();
     let mut text_content = String::new();
-
+    let mut id_content = String::new();
+    let mut current_tag: Option<String> = None;
     // Extract the text under the <text> node
     loop {
-        match reader.read_event(&mut buf) {
-            Ok(Event::Start(ref e)) if e.name() == b"text" => {
-                text_content = reader.read_text(b"text", &mut Vec::new())?;
-            }
+        match reader.read_event_into(&mut buf) {
+            Err(e) => panic!("Error at position {}: {:?}", reader.error_position(), e),
+            // exits the loop when reaching end of file
             Ok(Event::Eof) => break,
-            Err(e) => return Err(Box::new(e)),
+
+            Ok(Event::Start(e)) => {
+                current_tag = Some(
+                    e.name()
+                        .into_inner()
+                        .to_vec()
+                        .into_iter()
+                        .map(|c| c as char)
+                        .collect(),
+                );
+            }
+            Ok(Event::Text(e)) => {
+                if let Some(tag) = &current_tag {
+                    match tag.as_str() {
+                        "text" => {
+                            text_content = e.unescape().unwrap().into_owned();
+                        }
+                        "id" => {
+                            id_content = e.unescape().unwrap().into_owned();
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            Ok(Event::End(e)) => {
+                if let Some(tag) = &current_tag {
+                    match tag.as_str() {
+                        "text" => {
+                            // Write the content to data folder with name as id_content. AI!
+                            let links = extractor.extract_links(&text_content)?;
+                            total_links += links.len();
+                            for link in links.iter() {
+                                println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
+                            }
+                            current_tag = None;
+                            text_content.clear();
+                            id_content.clear();
+                            dbg!(total_links);
+                        }
+                        "id" => {}
+                        _ => (),
+                    }
+                }
+            }
+            // There are several other `Event`s we do not consider here
             _ => (),
         }
-        buf.clear();
-    }
-
-    // Pass the extracted text to extract_links
-    let links = extractor.extract_links(&text_content)?;
-    total_links += links.len();
-    for link in links.iter() {
-        println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
     }
 
     Ok(())
