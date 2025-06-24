@@ -12,6 +12,13 @@ pub struct MarkdownLink {
     pub end_byte: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct Article {
+    pub text: String,
+    pub id: String,
+    pub namespace: usize,
+}
+
 // Example usage
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extractor = LinkExtractor::new()?;
@@ -36,8 +43,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     reader.config_mut().allow_unmatched_ends = true;
     reader.config_mut().check_end_names = false;
     let mut buf = Vec::new();
-    let mut text_content = String::new();
-    let mut id_content = String::new();
+    let mut article = Article {
+        text: String::new(),
+        id: String::new(),
+        namespace: 0,
+    };
     let mut current_tag: Option<String> = None;
     // Extract the text under the <text> node
     loop {
@@ -60,10 +70,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            text_content = e.unescape().unwrap().into_owned();
+                            article.text = e.unescape().unwrap().into_owned();
                         }
                         "id" => {
-                            id_content = e.unescape().unwrap().into_owned();
+                            article.id = e.unescape().unwrap().into_owned();
+                        }
+                        "ns" => {
+                            article.namespace = e.unescape().unwrap().parse::<usize>().unwrap_or(0);
                         }
                         _ => (),
                     }
@@ -73,34 +86,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            dbg!(&id_content);
-                            // let file_path = format!("data/{}.wikitext", id_content);
-                            text_content.push('\n');
-                            // fs::write(&file_path, &text_content)?;
-                            // let file_content = fs::read_to_string(&file_path)?;
-                            // Add error handling for extract_links. Create new extractor when error
-                            // happens and continue.
-                            let links = match extractor.extract_links(&text_content) {
-                                Ok(links) => links,
-                                Err(_) => {
-                                    dbg!("Error parsing {}", &id_content);
-                                    extractor = LinkExtractor::new()?;
-                                    continue;
-                                }
-                            };
-                            total_links += links.len();
+                            dbg!(&article.id);
+                            article.text.push('\n');
 
-                            for link in links.iter() {
-                                writeln!(
-                                    tsv_file,
-                                    "{}\t{}",
-                                    link.title,
-                                    link.label.as_deref().unwrap_or(&link.title),
-                                )?;
+                            // Only process links if namespace is 0
+                            if article.namespace == 0 {
+                                let links = match extractor.extract_links(&article.text) {
+                                    Ok(links) => links,
+                                    Err(_) => {
+                                        dbg!("Error parsing {}", &article.id);
+                                        extractor = LinkExtractor::new()?;
+                                        continue;
+                                    }
+                                };
+                                total_links += links.len();
+
+                                for link in links.iter() {
+                                    writeln!(
+                                        tsv_file,
+                                        "{}\t{}",
+                                        link.title,
+                                        link.label.as_deref().unwrap_or(&link.title),
+                                    )?;
+                                }
                             }
                             current_tag = None;
-                            text_content.clear();
-                            id_content.clear();
+                            article.text.clear();
+                            article.id.clear();
+                            article.namespace = 0;
                         }
                         "id" => {}
                         _ => (),
