@@ -116,6 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         "{}\t{}\t{}",
                                         article.title,
                                         link.title,
+                                        // if link.lable is empty string, use link.title. AI!
                                         link.label.as_deref().unwrap_or(&link.title),
                                     )?;
                                 }
