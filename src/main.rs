@@ -1,6 +1,6 @@
-use std::fs;
-
 use extractor::LinkExtractor;
+use std::fs;
+use std::io::Write;
 mod extractor;
 
 #[derive(Debug, Clone)]
@@ -16,6 +16,10 @@ pub struct MarkdownLink {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
+    let mut tsv_file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("links.tsv")?;
 
     // Read the file and pass content to extract_links. No need to read from stdin.
     let args: Vec<String> = std::env::args().collect();
@@ -69,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            // dbg!(&id_content);
+                            dbg!(&id_content);
                             // let file_path = format!("data/{}.wikitext", id_content);
                             text_content.push('\n');
                             // fs::write(&file_path, &text_content)?;
@@ -79,16 +83,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             let links = match extractor.extract_links(&text_content) {
                                 Ok(links) => links,
                                 Err(_) => {
+                                    dbg!("Error parsing {}", &id_content);
                                     extractor = LinkExtractor::new()?;
                                     continue;
                                 }
                             };
                             total_links += links.len();
 
-                            let mut tsv_file = fs::OpenOptions::new()
-                                .create(true)
-                                .append(true)
-                                .open("links.tsv")?;
                             for link in links.iter() {
                                 writeln!(
                                     tsv_file,
@@ -96,7 +97,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     link.title,
                                     link.label.as_deref().unwrap_or(&link.title),
                                 )?;
-                            }
                             }
                             current_tag = None;
                             text_content.clear();
