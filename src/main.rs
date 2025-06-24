@@ -41,8 +41,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut reader = Reader::from_file(file_name)?;
     reader.config_mut().trim_text(true);
-    reader.config_mut().allow_unmatched_ends = true;
-    reader.config_mut().check_end_names = false;
+    // reader.config_mut().allow_unmatched_ends = true;
+    // reader.config_mut().check_end_names = false;
     let mut buf = Vec::new();
     let mut article = Article {
         text: String::new(),
@@ -91,11 +91,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            dbg!(&article.id);
                             article.text.push('\n');
 
                             // Only process links if namespace is 0
                             if article.namespace == 0 {
+                                dbg!(&article.id);
                                 let links = match extractor.extract_links(&article.text) {
                                     Ok(links) => links,
                                     Err(_) => {
