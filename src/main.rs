@@ -74,9 +74,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             text_content.push('\n');
                             // fs::write(&file_path, &text_content)?;
                             // let file_content = fs::read_to_string(&file_path)?;
-                            // Add error handling for extract_links. Create new extracor when error
-                            // happen and continue. AI!
-                            let links = extractor.extract_links(&text_content)?;
+                            // Add error handling for extract_links. Create new extractor when error
+                            // happens and continue.
+                            let links = match extractor.extract_links(&text_content) {
+                                Ok(links) => links,
+                                Err(_) => {
+                                    extractor = LinkExtractor::new()?;
+                                    continue;
+                                }
+                            };
                             total_links += links.len();
                             for link in links.iter() {
                                 println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
