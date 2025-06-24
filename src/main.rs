@@ -85,13 +85,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             };
                             total_links += links.len();
 
+                            let mut tsv_file = fs::OpenOptions::new()
+                                .create(true)
+                                .append(true)
+                                .open("links.tsv")?;
                             for link in links.iter() {
-                                // Write this to links.tsv file. AI!
-                                println!(
+                                writeln!(
+                                    tsv_file,
                                     "{}\t{}",
                                     link.title,
-                                    link.label.as_deref().unwrap_or(links.title),
-                                );
+                                    link.label.as_deref().unwrap_or(&link.title),
+                                )?;
+                            }
                             }
                             current_tag = None;
                             text_content.clear();
