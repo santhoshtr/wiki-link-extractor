@@ -17,6 +17,7 @@ pub struct Article {
     pub text: String,
     pub id: String,
     pub namespace: usize,
+    pub title: String,
 }
 
 // Example usage
@@ -47,6 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         text: String::new(),
         id: String::new(),
         namespace: 0,
+        title: String::new(),
     };
     let mut current_tag: Option<String> = None;
     // Extract the text under the <text> node
@@ -78,6 +80,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         "ns" => {
                             article.namespace = e.unescape().unwrap().parse::<usize>().unwrap_or(0);
                         }
+                        "title" => {
+                            article.title = e.unescape().unwrap().into_owned();
+                        }
                         _ => (),
                     }
                 }
@@ -104,7 +109,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 for link in links.iter() {
                                     writeln!(
                                         tsv_file,
-                                        "{}\t{}",
+                                        "{}\t{}\t{}",
+                                        article.title,
                                         link.title,
                                         link.label.as_deref().unwrap_or(&link.title),
                                     )?;
