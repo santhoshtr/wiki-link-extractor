@@ -84,8 +84,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 }
                             };
                             total_links += links.len();
+
                             for link in links.iter() {
-                                println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
+                                // Write this to links.tsv file. AI!
+                                println!(
+                                    "{}\t{}",
+                                    link.title,
+                                    link.label.as_deref().unwrap_or(links.title),
+                                );
                             }
                             current_tag = None;
                             text_content.clear();
