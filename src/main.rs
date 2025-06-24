@@ -69,10 +69,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(tag) = &current_tag {
                     match tag.as_str() {
                         "text" => {
-                            let file_path = format!("data/{}.wikitext", id_content);
-                            fs::write(&file_path, &text_content)?;
-                            let file_content = fs::read_to_string(&file_path)?;
-                            let links = extractor.extract_links(&file_content)?;
+                            // dbg!(&id_content);
+                            // let file_path = format!("data/{}.wikitext", id_content);
+                            text_content.push('\n');
+                            // fs::write(&file_path, &text_content)?;
+                            // let file_content = fs::read_to_string(&file_path)?;
+                            // Add error handling for extract_links. Create new extracor when error
+                            // happen and continue. AI!
+                            let links = extractor.extract_links(&text_content)?;
                             total_links += links.len();
                             for link in links.iter() {
                                 println!("{}\t{}", link.title, link.label.as_deref().unwrap_or(""),);
@@ -80,7 +84,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             current_tag = None;
                             text_content.clear();
                             id_content.clear();
-                            dbg!(total_links);
                         }
                         "id" => {}
                         _ => (),
