@@ -1,5 +1,7 @@
+use std::{io::Error, time::Instant};
+
 use streaming_iterator::StreamingIterator;
-use tree_sitter::{Node, Parser, Query, QueryCursor};
+use tree_sitter::{Node, ParseOptions, ParseState, Parser, Query, QueryCursor};
 use tree_sitter_wikitext::LANGUAGE;
 
 #[derive(Debug, Clone)]
@@ -35,41 +37,62 @@ impl LinkExtractor {
         Ok(LinkExtractor { parser, query })
     }
 
-    pub fn extract_links(
-        &mut self,
-        wikitext: &str,
-    ) -> Result<Vec<WikiLink>, Box<dyn std::error::Error>> {
-        let tree = self.parser.parse(wikitext, None).unwrap();
-        let root_node = tree.root_node();
-        let mut cursor = QueryCursor::new();
-        let mut captures = cursor.captures(&self.query, root_node, wikitext.as_bytes());
-
-        let mut links = Vec::new();
-        while let Some((mat, capture_index)) = captures.next() {
-            let capture = mat.captures[*capture_index];
-            let capture_name = &self.query.capture_names()[capture.index as usize];
-            let node_text = get_node_text(capture.node, wikitext);
-            match *capture_name {
-                // Inline links
-                "link.title" => {
-                    let title = node_text.trim_matches('"').trim_matches('\'');
-                    links.push(WikiLink {
-                        label: Some(String::new()),
-                        title: title.to_string(),
-                        start_byte: capture.node.start_byte(),
-                        end_byte: capture.node.end_byte(),
-                    });
-                }
-                "link.label" => {
-                    if let Some(last_link) = links.last_mut() {
-                        last_link.label = Some(node_text);
-                    }
-                }
-                _ => {}
+    pub fn extract_links(&mut self, wikitext: &str) -> Result<Vec<WikiLink>, &'static str> {
+        let start_time = Instant::now();
+        let timeout = 100000;
+        let progress_callback = &mut |_: &ParseState| {
+            if timeout > 0 && start_time.elapsed().as_micros() > timeout as u128 {
+                return true;
             }
-        }
 
-        Ok(links)
+            false
+        };
+
+        let parse_opts = ParseOptions::new().progress_callback(progress_callback);
+        let tree = self.parser.parse_with_options(
+            &mut |i, _| {
+                if i < wikitext.len() {
+                    &wikitext[i..]
+                } else {
+                    ""
+                }
+            },
+            None,
+            Some(parse_opts),
+        );
+        if let Some(tree) = tree {
+            let root_node = tree.root_node();
+            let mut cursor = QueryCursor::new();
+            let mut captures = cursor.captures(&self.query, root_node, wikitext.as_bytes());
+
+            let mut links = Vec::new();
+            while let Some((mat, capture_index)) = captures.next() {
+                let capture = mat.captures[*capture_index];
+                let capture_name = &self.query.capture_names()[capture.index as usize];
+                let node_text = get_node_text(capture.node, wikitext);
+                match *capture_name {
+                    // Inline links
+                    "link.title" => {
+                        let title = node_text.trim_matches('"').trim_matches('\'');
+                        links.push(WikiLink {
+                            label: Some(String::new()),
+                            title: title.to_string(),
+                            start_byte: capture.node.start_byte(),
+                            end_byte: capture.node.end_byte(),
+                        });
+                    }
+                    "link.label" => {
+                        if let Some(last_link) = links.last_mut() {
+                            last_link.label = Some(node_text);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            Ok(links)
+        } else {
+            Err("Parse error")
+        }
     }
 }
 

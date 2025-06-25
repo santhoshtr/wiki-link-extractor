@@ -96,3 +96,8 @@ cargo test
 - The program appends a newline to each line of input before processing to ensure proper parsing.
 - **Powered by [tree_sitter_wikitext](https://github.com/santhoshtr/tree-sitter-wikitext):**
   This program uses the `tree_sitter_wikitext` library to parse wikitext efficiently. `tree_sitter_wikitext` is a Tree-sitter grammar for parsing wikitext, enabling structured and efficient extraction of elements like links, headings, and more.
+
+```bash
+cat mlwiki-20250601-pages-articles.xml|  xq  -q 'text'  > ml.wikitext
+```
+

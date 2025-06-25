@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         namespace: 0,
         title: String::new(),
     };
-    let mut current_tag: Option<String> = None;
+    let mut tag_stack: Vec<String> = Vec::new();
     // Extract the text under the <text> node
     loop {
         match reader.read_event_into(&mut buf) {
@@ -73,76 +73,70 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .map(|c| c as char)
                     .collect::<String>();
 
-                current_tag = Some(format!(
-                    "{}/{}",
-                    current_tag.as_deref().unwrap_or(""),
-                    base_tag
-                ));
+                tag_stack.push(base_tag);
             }
             Ok(Event::Text(e)) => {
-                if let Some(tag) = current_tag.as_deref() {
-                    match tag {
-                        "mediawiki/page/revision/text" => {
-                            article.text = e.unescape().unwrap().into_owned();
-                        }
-                        "mediawiki/page/id" => {
-                            article.id = e.unescape().unwrap().into_owned();
-                        }
-                        "mediawiki/page/ns" => {
-                            article.namespace =
-                                e.unescape().unwrap().parse::<usize>().unwrap_or(999999);
-                        }
-                        "mediawiki/page/title" => {
-                            article.title = e.unescape().unwrap().into_owned();
-                        }
-                        _ => (),
+                let path = tag_stack.join("/");
+                match path.as_str() {
+                    "mediawiki/page/revision/text" => {
+                        article.text = e.unescape().unwrap().into_owned();
                     }
+                    "mediawiki/page/id" => {
+                        article.id = e.unescape().unwrap().into_owned();
+                    }
+                    "mediawiki/page/ns" => {
+                        article.namespace =
+                            e.unescape().unwrap().parse::<usize>().unwrap_or(999999);
+                    }
+                    "mediawiki/page/title" => {
+                        article.title = e.unescape().unwrap().into_owned();
+                    }
+                    _ => (),
                 }
             }
             Ok(Event::End(e)) => {
-                if let Some(tag) = &current_tag {
-                    dbg!(&current_tag);
-                    if tag.as_str() == "mediawiki/page/revision/text" {
-                        article.text.push('\n');
+                let path = tag_stack.join("/");
+                // dbg!(&path);
+                tag_stack.pop();
+                if path.as_str() == "mediawiki/page/revision/text" {
+                    article.text.push('\n');
 
-                        // Only process links if namespace is 0
-                        if article.namespace == 0 {
-                            articles_processed += 1;
-                            let links = match extractor.extract_links(&article.text) {
-                                Ok(links) => links,
-                                Err(_) => {
-                                    eprintln!(
-                                        "Error parsing article: id={}, title={}, namespace={}",
-                                        article.id, article.title, article.namespace
-                                    );
-                                    extractor = LinkExtractor::new()?;
-                                    parsing_errors += 1;
-                                    continue;
-                                }
-                            };
-                            total_links += links.len();
-
-                            for link in links.iter() {
-                                writeln!(
-                                    tsv_writer,
-                                    "{}\t{}\t{}",
-                                    article.title,
-                                    link.title,
-                                    link.label.as_deref().unwrap_or(&link.title),
-                                )?;
-                            }
-                            if articles_processed % 1000 == 0 {
-                                println!(
-                                    "Articles processed: {}, Links collected {}",
-                                    articles_processed, total_links
+                    // Only process links if namespace is 0
+                    if article.namespace == 0 {
+                        articles_processed += 1;
+                        let links = match extractor.extract_links(&article.text) {
+                            Ok(links) => links,
+                            Err(_) => {
+                                eprintln!(
+                                    "Error parsing article: id={}, title={}, namespace={}",
+                                    article.id, article.title, article.namespace
                                 );
+                                extractor = LinkExtractor::new()?;
+                                parsing_errors += 1;
+                                continue;
                             }
+                        };
+                        total_links += links.len();
+
+                        for link in links.iter() {
+                            writeln!(
+                                tsv_writer,
+                                "{}\t{}\t{}",
+                                article.title,
+                                link.title,
+                                link.label.as_deref().unwrap_or(&link.title),
+                            )?;
                         }
-                        current_tag = None;
-                        article.text.clear();
-                        article.id.clear();
-                        article.namespace = 0;
+                        if articles_processed % 1000 == 0 {
+                            println!(
+                                "Articles processed: {}, Links collected {}",
+                                articles_processed, total_links
+                            );
+                        }
                     }
+                    article.text.clear();
+                    article.id.clear();
+                    article.namespace = 0;
                 }
             }
             // There are several other `Event`s we do not consider here
