@@ -74,6 +74,7 @@ impl LinkExtractor {
                     // Inline links
                     "link.title" => {
                         let title = node_text.trim_matches('"').trim_matches('\'');
+                        // if title has : and . followed by image extensions, skip. AI!
                         links.push(WikiLink {
                             label: Some(String::new()),
                             title: title.to_string(),
