@@ -74,13 +74,14 @@ impl LinkExtractor {
                     // Inline links
                     "link.title" => {
                         let title = node_text.trim_matches('"').trim_matches('\'');
-                        // if title has : and . followed by image extensions, skip. AI!
-                        links.push(WikiLink {
-                            label: Some(String::new()),
-                            title: title.to_string(),
-                            start_byte: capture.node.start_byte(),
-                            end_byte: capture.node.end_byte(),
-                        });
+                        if !title.contains(':') && !title.contains('.') {
+                            links.push(WikiLink {
+                                label: Some(String::new()),
+                                title: title.to_string(),
+                                start_byte: capture.node.start_byte(),
+                                end_byte: capture.node.end_byte(),
+                            });
+                        }
                     }
                     "link.label" => {
                         if let Some(last_link) = links.last_mut() {
