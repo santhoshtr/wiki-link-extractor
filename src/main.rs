@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     _ => (),
                 }
             }
-            Ok(Event::End(e)) => {
+            Ok(Event::End(_e)) => {
                 let path = tag_stack.join("/");
                 // dbg!(&path);
                 tag_stack.pop();
