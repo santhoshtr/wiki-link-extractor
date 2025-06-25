@@ -39,7 +39,7 @@ impl LinkExtractor {
 
     pub fn extract_links(&mut self, wikitext: &str) -> Result<Vec<WikiLink>, &'static str> {
         let start_time = Instant::now();
-        let timeout = 100000;
+        let timeout = 100000; // micro seconds
         let progress_callback = &mut |_: &ParseState| {
             if timeout > 0 && start_time.elapsed().as_micros() > timeout as u128 {
                 return true;
@@ -75,6 +75,7 @@ impl LinkExtractor {
                     "link.title" => {
                         let title = node_text.trim_matches('"').trim_matches('\'');
                         if !title.contains(':') && !title.contains('.') {
+                            // Skip images
                             links.push(WikiLink {
                                 label: Some(String::new()),
                                 title: title.to_string(),
