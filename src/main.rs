@@ -25,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
     let mut articles_processed = 0;
+    let mut parsing_errors = 0;
     use std::io::BufWriter;
     let tsv_file = fs::OpenOptions::new()
         .create(true)
@@ -83,7 +84,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             article.id = e.unescape().unwrap().into_owned();
                         }
                         "ns" => {
-                            article.namespace = e.unescape().unwrap().parse::<usize>().unwrap_or(0);
+                            article.namespace =
+                                e.unescape().unwrap().parse::<usize>().unwrap_or(999999);
                         }
                         "title" => {
                             article.title = e.unescape().unwrap().into_owned();
@@ -100,7 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                             // Only process links if namespace is 0
                             if article.namespace == 0 {
-                                dbg!(&article.id);
+                                articles_processed += 1;
                                 let links = match extractor.extract_links(&article.text) {
                                     Ok(links) => links,
                                     Err(_) => {
@@ -109,6 +111,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                             article.id, article.title, article.namespace
                                         );
                                         extractor = LinkExtractor::new()?;
+                                        parsing_errors += 1;
                                         continue;
                                     }
                                 };
@@ -123,10 +126,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         link.label.as_deref().unwrap_or(&link.title),
                                     )?;
                                 }
-                            }
-                            articles_processed += 1;
-                            if articles_processed % 100 == 0 {
-                                println!("Articles processed: {}", articles_processed);
+                                if articles_processed % 1000 == 0 {
+                                    println!(
+                                        "Articles processed: {}, Links collected {}",
+                                        articles_processed, total_links
+                                    );
+                                }
                             }
                             current_tag = None;
                             article.text.clear();
@@ -142,6 +147,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => (),
         }
     }
-
+    println!(
+        "Articles processed: {}\nLinks collected: {}\nErrors: {}\n",
+        articles_processed, total_links, parsing_errors
+    );
     Ok(())
 }
