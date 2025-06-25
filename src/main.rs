@@ -66,21 +66,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             Ok(Event::Start(e)) => {
                 current_tag = Some(
-                    e.name()
-                        .into_inner()
-                        .to_vec()
-                        .into_iter()
-                        .map(|c| c as char)
-                        .collect(),
+                    format!(
+                        "{}/{}",
+                        current_tag.as_deref().unwrap_or(""),
+                        e.name()
+                            .into_inner()
+                            .to_vec()
+                            .into_iter()
+                            .map(|c| c as char)
+                            .collect::<String>()
+                    ),
                 );
             }
             Ok(Event::Text(e)) => {
-                if let Some(tag) = &current_tag {
+                if let Some(tag) = current_tag.as_deref() {
                     match tag.as_str() {
                         "text" => {
                             article.text = e.unescape().unwrap().into_owned();
                         }
-                        "id" => {
+                        "page/id" => {
                             article.id = e.unescape().unwrap().into_owned();
                         }
                         "ns" => {
@@ -133,7 +137,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     );
                                 }
                             }
-                            current_tag = None;
+                            if let Some(pos) = current_tag.as_deref().unwrap_or("").rfind('/') {
+                                current_tag = Some(current_tag.as_deref().unwrap_or("").split_at(pos).0.to_string());
+                            } else {
+                                current_tag = None;
+                            }
                             article.text.clear();
                             article.id.clear();
                             article.namespace = 0;
