@@ -24,6 +24,7 @@ pub struct Article {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
+    let mut articles_processed = 0;
     use std::io::BufWriter;
     let tsv_file = fs::OpenOptions::new()
         .create(true)
@@ -103,7 +104,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let links = match extractor.extract_links(&article.text) {
                                     Ok(links) => links,
                                     Err(_) => {
-                                        dbg!("Error parsing {}", &article.id);
+                                        eprintln!(
+                                            "Error parsing article: id={}, title={}, namespace={}",
+                                            article.id, article.title, article.namespace
+                                        );
                                         extractor = LinkExtractor::new()?;
                                         continue;
                                     }
@@ -119,6 +123,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         link.label.as_deref().unwrap_or(&link.title),
                                     )?;
                                 }
+                            }
+                            articles_processed += 1;
+                            if articles_processed % 100 == 0 {
+                                println!("Articles processed: {}", articles_processed);
                             }
                             current_tag = None;
                             article.text.clear();
