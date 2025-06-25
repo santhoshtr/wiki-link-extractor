@@ -76,6 +76,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .collect::<String>();
 
                 tag_stack.push(base_tag);
+                let path = tag_stack.join("/");
+                if path == "mediawiki/page" {
+                    article.text.clear();
+                    article.id.clear();
+                    article.namespace = 0;
+                    article.redirect = false;
+                }
+            }
+            Ok(Event::Empty(e)) => {
+                let base_tag = e
+                    .name()
+                    .into_inner()
+                    .to_vec()
+                    .into_iter()
+                    .map(|c| c as char)
+                    .collect::<String>();
+                if base_tag == "redirect" {
+                    article.redirect = true
+                }
             }
             Ok(Event::Text(e)) => {
                 let path = tag_stack.join("/");
@@ -92,9 +111,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                     "mediawiki/page/title" => {
                         article.title = e.unescape().unwrap().into_owned();
-                    }
-                    "mediawiki/page/redirect" => {
-                        article.redirect = true;
                     }
                     _ => (),
                 }
@@ -116,6 +132,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Error parsing article: id={}, title={}, namespace={}",
                                     article.id, article.title, article.namespace
                                 );
+                                // Write the text to a file named data/<id>.wikitext. AI!
                                 extractor = LinkExtractor::new()?;
                                 parsing_errors += 1;
                                 continue;
@@ -139,9 +156,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             );
                         }
                     }
-                    article.text.clear();
-                    article.id.clear();
-                    article.namespace = 0;
                 }
             }
             // There are several other `Event`s we do not consider here
