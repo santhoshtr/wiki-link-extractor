@@ -18,6 +18,7 @@ pub struct Article {
     pub id: String,
     pub namespace: usize,
     pub title: String,
+    pub redirect: bool,
 }
 
 // Example usage
@@ -55,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         id: String::new(),
         namespace: 0,
         title: String::new(),
+        redirect: false,
     };
     let mut tag_stack: Vec<String> = Vec::new();
     // Extract the text under the <text> node
@@ -91,6 +93,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "mediawiki/page/title" => {
                         article.title = e.unescape().unwrap().into_owned();
                     }
+                    "mediawiki/page/redirect" => {
+                        article.redirect = true;
+                    }
                     _ => (),
                 }
             }
@@ -101,8 +106,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if path.as_str() == "mediawiki/page/revision/text" {
                     article.text.push('\n');
 
-                    // Only process links if namespace is 0
-                    if article.namespace == 0 {
+                    // Only process links if namespace is 0 and redirect is false
+                    if article.namespace == 0 && !article.redirect {
                         articles_processed += 1;
                         let links = match extractor.extract_links(&article.text) {
                             Ok(links) => links,
