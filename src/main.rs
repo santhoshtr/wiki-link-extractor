@@ -132,7 +132,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     "Error parsing article: id={}, title={}, namespace={}",
                                     article.id, article.title, article.namespace
                                 );
-                                // Write the text to a file named data/<id>.wikitext. AI!
+                                let dir = "data";
+                                fs::create_dir_all(dir)?;
+                                let file_path = format!("{}/{}.wikitext", dir, article.id);
+                                let mut file = fs::File::create(file_path)?;
+                                file.write_all(article.text.as_bytes())?;
                                 extractor = LinkExtractor::new()?;
                                 parsing_errors += 1;
                                 continue;
