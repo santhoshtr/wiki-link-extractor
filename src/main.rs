@@ -1,7 +1,19 @@
+use clap::Parser;
 use extractor::LinkExtractor;
 use std::fs;
 use std::io::Write;
 mod extractor;
+
+#[derive(Parser)]
+struct Args {
+    /// Input file name
+    #[arg(short, long)]
+    input: String,
+
+    /// Output file name
+    #[arg(short, long, default_value = "links.tsv")]
+    output: String,
+}
 
 #[derive(Debug, Clone)]
 pub struct MarkdownLink {
@@ -23,6 +35,7 @@ pub struct Article {
 
 // Example usage
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
     let mut extractor = LinkExtractor::new()?;
     let mut total_links = 0;
     let mut articles_processed = 0;
@@ -31,16 +44,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tsv_file = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open("links.tsv")?;
+        .open(&args.output)?;
     let mut tsv_writer = BufWriter::new(tsv_file);
 
     // Read the file and pass content to extract_links. No need to read from stdin.
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Usage: {} <file_name>", args[0]);
-        std::process::exit(1);
-    }
-    let file_name = &args[1];
+    let file_name = &args.input;
     use quick_xml::Reader;
     use quick_xml::events::Event;
 

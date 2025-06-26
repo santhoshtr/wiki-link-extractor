@@ -13,3 +13,4 @@ streaming-iterator = "0.1.9"
 tree-sitter = "0.25.6"
 #tree-sitter-wikitext = { git = "https://github.com/santhoshtr/tree-sitter-wikitext" }
 tree-sitter-wikitext = { path = "../tree-sitter-wikitext" }
+clap = { version = "4.3", features = ["derive"] }
